@@ -1,0 +1,8 @@
+# Rust build artifacts (large, regenerated inside the container)
+target/
+
+# Version control
+.git/
+
+# Dockerfile not needed in build context
+Dockerfile
