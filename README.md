@@ -25,6 +25,7 @@ chmod +x run.sh && ./run.sh
 |----------|--------|
 | `SKIP_APPLE=1` | Skip Apple Container builds entirely (Docker only) |
 | `VERBOSE=1` | Show full build output instead of suppressing it |
+| `N_RUNS=25` | Number of benchmark runs per image (default: `10`) |
 
 ### Examples
 

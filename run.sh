@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-N_RUNS=10
+N_RUNS=${N_RUNS:-10}
 VERBOSE=${VERBOSE:-}
 SKIP_APPLE=${SKIP_APPLE:-}
 
