@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# Rust build artifacts
+rust/target.tmp
+rust/target

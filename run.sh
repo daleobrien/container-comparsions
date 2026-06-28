@@ -24,32 +24,44 @@ fi
 echo "=== Building with Docker ==="
 docker build --platform linux/arm64 -q -t hello-rust rust/ > /dev/null 2>&1
 docker build --platform linux/arm64 -q -t hello-cpp cpp/ > /dev/null 2>&1
+docker build --platform linux/arm64 -q -t hello-node node/ > /dev/null 2>&1
+docker build --platform linux/arm64 -q -t hello-java java/ > /dev/null 2>&1
 
 # --- Build with Apple Container ---
 if $APPLE_AVAILABLE; then
     echo "=== Building with Apple Container ==="
     container build --arch arm64 --tag hello-rust-apple --file rust/Dockerfile rust/ > /dev/null 2>&1
     container build --arch arm64 --tag hello-cpp-apple --file cpp/Dockerfile cpp/ > /dev/null 2>&1
+    container build --arch arm64 --tag hello-node-apple --file node/Dockerfile node/ > /dev/null 2>&1
+    container build --arch arm64 --tag hello-java-apple --file java/Dockerfile java/ > /dev/null 2>&1
 fi
 
 # --- Get image sizes ---
 size_rust_docker=$(docker images --format "{{.Size}}" hello-rust)
 size_cpp_docker=$(docker images --format "{{.Size}}" hello-cpp)
+size_node_docker=$(docker images --format "{{.Size}}" hello-node)
+size_java_docker=$(docker images --format "{{.Size}}" hello-java)
 
 if $APPLE_AVAILABLE; then
     size_rust_apple=$(container image list -v | awk -v name="hello-rust-apple" -v tag="latest" '$1==name && $2==tag {print $(NF-3), $(NF-2)}')
     size_cpp_apple=$(container image list -v  | awk -v name="hello-cpp-apple"  -v tag="latest" '$1==name && $2==tag {print $(NF-3), $(NF-2)}')
+    size_node_apple=$(container image list -v | awk -v name="hello-node-apple" -v tag="latest" '$1==name && $2==tag {print $(NF-3), $(NF-2)}')
+    size_java_apple=$(container image list -v | awk -v name="hello-java-apple" -v tag="latest" '$1==name && $2==tag {print $(NF-3), $(NF-2)}')
 fi
 
 # --- Build benchmark spec list (newline-separated, pipe-delimited fields) ---
 SPECS=$(printf '%s|%s|%s|%s\n' \
     "hello-rust" "docker" "hello-rust" "$size_rust_docker" \
-    "hello-cpp"  "docker" "hello-cpp"  "$size_cpp_docker")
+    "hello-cpp"  "docker" "hello-cpp"  "$size_cpp_docker" \
+    "hello-node" "docker" "hello-node" "$size_node_docker" \
+    "hello-java" "docker" "hello-java" "$size_java_docker")
 if $APPLE_AVAILABLE; then
     SPECS="$SPECS
 $(printf '%s|%s|%s|%s\n' \
     "hello-rust-apple:latest" "container" "hello-rust" "$size_rust_apple" \
-    "hello-cpp-apple:latest"  "container" "hello-cpp"  "$size_cpp_apple")"
+    "hello-cpp-apple:latest"  "container" "hello-cpp"  "$size_cpp_apple" \
+    "hello-node-apple:latest" "container" "hello-node" "$size_node_apple" \
+    "hello-java-apple:latest" "container" "hello-java" "$size_java_apple")"
 fi
 
 # --- Unified benchmark + comparison table ---
@@ -57,88 +69,19 @@ echo ""
 echo "=== Benchmark (${N_RUNS} runs each) ==="
 
 export N_RUNS SPECS
-avgs=$(python3 << 'PYEOF'
-import os, subprocess, time, sys
-
-specs_text = os.environ['SPECS'].strip()
-n = int(os.environ['N_RUNS'])
-
-benchmarks = []
-for line in specs_text.split('\n'):
-    line = line.strip()
-    if not line:
-        continue
-    image, runtime, label, size = line.split('|')
-    benchmarks.append((label, runtime, image, size))
-
-rows_drawn = 0
-
-def draw_header():
-    sys.stderr.write(f'{"IMAGE":<18} {"RUNTIME":<10} {"SIZE":>10} {"PROGRESS":>12} {"AVG":>12}\n')
-    sys.stderr.write(f'{"─" * 18} {"─" * 10} {"─" * 10} {"─" * 12} {"─" * 12}\n')
-    sys.stderr.flush()
-
-def add_row(label, rt, size):
-    global rows_drawn
-    rt_label = 'apple' if rt == 'container' else rt
-    sys.stderr.write(f'{label:<18} {rt_label:<10} {size:>10} {"":>12} {"":>12}\n')
-    rows_drawn += 1
-    sys.stderr.flush()
-
-def update_row(label, rt, size, i, avg):
-    global rows_drawn
-    row_idx = [b[2] for b in benchmarks].index(image)
-    up = rows_drawn - row_idx
-    rt_label = 'apple' if rt == 'container' else rt
-    if i >= n:
-        prog = '[ done ]'
-    else:
-        prog = f'[{i:>4}/{n:<4}]'
-    # Move up to the target row, clear line, write content, move back down,
-    # then \r to ensure cursor returns to column 0 for the next add_row.
-    sys.stderr.write(
-        f'\033[{up}A\r\033[K'
-        f'{label:<18} {rt_label:<10} {size:>10} {prog:>12} {avg:>8.2f} ms'
-        f'\033[{up}B\r'
-    )
-    sys.stderr.flush()
-
-# Draw header once
-draw_header()
-
-results = []
-for label, runtime, image, size in benchmarks:
-    # Add a new row for this benchmark
-    add_row(label, runtime, size)
-
-    if runtime == 'docker':
-        cmd = ['docker', 'run', '--rm', image]
-    else:
-        cmd = ['container', 'run', image]
-
-    total = 0.0
-    for i in range(1, n + 1):
-        start = time.time()
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        total += (time.time() - start) * 1000
-        update_row(label, runtime, size, i, total / i)
-
-    results.append(total / n)
-
-sys.stderr.write('\n')
-
-for avg in results:
-    print(avg)
-PYEOF
-)
+avgs=$(python3 support/bench.py)
 
 # Parse averages back into shell variables
 set -- $avgs
 avg_rust_docker=$1
 avg_cpp_docker=$2
+avg_node_docker=$3
+avg_java_docker=$4
 if $APPLE_AVAILABLE; then
-    avg_rust_apple=$3
-    avg_cpp_apple=$4
+    avg_rust_apple=$5
+    avg_cpp_apple=$6
+    avg_node_apple=$7
+    avg_java_apple=$8
 fi
 
 # --- Stop apple container only if it wasn't already running ---
