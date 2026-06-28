@@ -3,6 +3,7 @@ set -e
 
 N_RUNS=10
 VERBOSE=${VERBOSE:-}
+SKIP_APPLE=${SKIP_APPLE:-}
 
 quiet() {
     if [ -n "$VERBOSE" ]; then
@@ -15,7 +16,11 @@ quiet() {
 # --- Detect apple container CLI ---
 APPLE_AVAILABLE=false
 if command -v container > /dev/null 2>&1; then
-    APPLE_AVAILABLE=true
+    if [ -z "$SKIP_APPLE" ]; then
+        APPLE_AVAILABLE=true
+    else
+        echo "=== Apple Container skipped (SKIP_APPLE is set) ==="
+    fi
 fi
 
 # --- Start apple container service if needed ---
