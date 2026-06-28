@@ -16,3 +16,28 @@ Minimal Dockerized "hello world" in Rust, C++, Haskell, Node.js, Java, and Pytho
 ```sh
 chmod +x run.sh && ./run.sh
 ```
+
+## Options
+
+`run.sh` supports the following environment variables:
+
+| Variable | Effect |
+|----------|--------|
+| `SKIP_APPLE=1` | Skip Apple Container builds entirely (Docker only) |
+| `VERBOSE=1` | Show full build output instead of suppressing it |
+
+### Examples
+
+```sh
+# Docker + Apple Container (default)
+./run.sh
+
+# Docker only
+SKIP_APPLE=1 ./run.sh
+
+# Docker + Apple Container, with verbose build output
+VERBOSE=1 ./run.sh
+
+# Docker only, verbose
+SKIP_APPLE=1 VERBOSE=1 ./run.sh
+```
