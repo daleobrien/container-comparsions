@@ -1,5 +1,5 @@
 # --- Stage 1: compile to a native binary with GraalVM ---
-FROM ghcr.io/graalvm/native-image-community:22 AS builder
+FROM ghcr.io/graalvm/native-image-community:25 AS builder
 
 WORKDIR /app
 COPY HelloWorld.java .
