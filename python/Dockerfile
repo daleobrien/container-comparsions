@@ -7,11 +7,11 @@ RUN pip install pyinstaller
 WORKDIR /app
 COPY hello.py .
 
-RUN pyinstaller --onefile --clean hello.py
+RUN pyinstaller --onedir --clean hello.py
 
 # --- Stage 2: minimal execution image ---
 FROM alpine:3.20
 
-COPY --from=builder /app/dist/hello /hello
+COPY --from=builder /app/dist/hello /app/hello
 
-ENTRYPOINT ["/hello"]
+ENTRYPOINT ["/app/hello/hello"]
