@@ -1,4 +1,4 @@
-# rust-docker
+# Container Comparsions
 
 Minimal Dockerized "hello world" in Rust, C++, Haskell, Node.js, Java, and Python — compiled languages build `FROM scratch` with zero runtime dependencies, while the interpreted languages use AOT/bundling tools on minimal base images.
 
