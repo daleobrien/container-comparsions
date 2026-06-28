@@ -1,7 +1,7 @@
 # --- Stage 1: compile to a static native binary with GHC ---
 FROM alpine:3.21 AS builder
 
-RUN apk add --no-cache ghc binutils
+RUN apk add --no-cache ghc binutils gcc musl-dev
 
 WORKDIR /app
 COPY hello.hs .
