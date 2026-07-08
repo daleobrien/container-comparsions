@@ -17,8 +17,6 @@ import time
 N_RUNS = int(os.environ.get('N_RUNS', '10'))
 SKIP_APPLE = os.environ.get('SKIP_APPLE', '') != ''
 SKIP_COLIMA = os.environ.get('SKIP_COLIMA', '') != ''
-COLIMA_SOCKET = os.environ.get('COLIMA_SOCKET',
-                                f'unix://{os.environ["HOME"]}/.colima/default/docker.sock')
 
 IMAGES = ['rust', 'cpp', 'haskell', 'node', 'java', 'python']
 
@@ -104,9 +102,9 @@ def set_status(msg):
 # ── Build helpers ──────────────────────────────────────────────────────────
 
 def _docker_cmd(runtime):
-    """Return the docker CLI prefix for the given runtime."""
+    """Return the CLI prefix for the given runtime."""
     if runtime == 'colima':
-        return ['docker', '-H', COLIMA_SOCKET]
+        return ['colima', 'nerdctl', '--']
     return ['docker']
 
 
@@ -120,7 +118,7 @@ def build(label, runtime):
         cmd = _docker_cmd(runtime)
         subprocess.run(
             cmd + ['build', '--platform', 'linux/arm64', '-t', image, f'{label}/'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+            capture_output=True, check=True,
         )
         result = subprocess.run(
             cmd + ['images', '--format', '{{.Size}}', image],
@@ -190,7 +188,8 @@ def main():
 
         set_status('Done.')
     except subprocess.CalledProcessError as e:
-        set_status(f'ERROR: {e}')
+        err = e.stderr.decode() if e.stderr else str(e)
+        set_status(f'ERROR: {err[-200:]}')
         sys.exit(1)
     finally:
         sys.stderr.write(SHOW_CURSOR)

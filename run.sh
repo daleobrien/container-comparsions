@@ -31,12 +31,19 @@ COLIMA_AVAILABLE=false
 COLIMA_WAS_RUNNING=false
 if [ -z "$SKIP_COLIMA" ] && command -v colima > /dev/null 2>&1; then
     if colima status 2>&1 | grep -q 'Running'; then
-        COLIMA_WAS_RUNNING=true
+        if colima status 2>&1 | grep -q 'runtime: containerd'; then
+            COLIMA_WAS_RUNNING=true
+            COLIMA_AVAILABLE=true
+        else
+            echo "=== Colima is running but NOT using containerd runtime ==="
+            echo "=== Run: colima delete && colima start --runtime containerd ==="
+            echo "=== Skipping Colima for this run ==="
+        fi
     else
-        echo "=== Starting Colima ==="
-        colima start
+        echo "=== Starting Colima (containerd) ==="
+        colima start --runtime containerd
+        COLIMA_AVAILABLE=true
     fi
-    COLIMA_AVAILABLE=true
 else
     if [ -n "$SKIP_COLIMA" ]; then
         echo "=== Colima skipped (SKIP_COLIMA is set) ==="
