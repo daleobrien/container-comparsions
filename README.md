@@ -13,12 +13,12 @@ The script displays a live-updating comparison table that fills in as builds and
 ```
 IMAGE         DOCKER SIZE     DOCKER AVG   APPLE SIZE      APPLE AVG  COLIMA SIZE     COLIMA AVG
 ──────────── ──────────── ────────────── ──────────── ────────────── ──────────── ──────────────
-rust                615kB      118.26 ms       212 KB      682.73 ms        615kB      119.75 ms
-cpp                  12kB      114.72 ms         2 KB      668.64 ms         12kB      112.16 ms
-haskell            1.45MB      122.05 ms       375 KB      744.49 ms       1.45MB      112.79 ms
-node                166MB      117.81 ms      47.4 MB      674.42 ms        166MB      118.95 ms
-java               65.2MB      118.69 ms      13.5 MB      640.98 ms       65.2MB      115.71 ms
-python             40.1MB      145.27 ms      12.1 MB      725.36 ms       40.1MB      145.53 ms
+rust                395kB      140.67 ms       212 KB      708.20 ms      401.4kB      491.41 ms
+cpp                  832B      134.72 ms         2 KB      663.99 ms      8.192kB      451.82 ms
+haskell            1.06MB      137.05 ms       375 KB      760.13 ms      1.069MB      451.95 ms
+node                118MB      138.99 ms      47.4 MB      678.13 ms      118.7MB      442.01 ms
+java               47.3MB      137.50 ms      13.5 MB      629.79 ms      51.68MB      448.47 ms
+python             27.2MB      167.92 ms      12.1 MB      717.05 ms      28.01MB      485.89 ms
 
   Done.
 ```
