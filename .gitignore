@@ -4,3 +4,4 @@
 # Rust build artifacts
 rust/target.tmp
 rust/target
+support/__pycache__/run.cpython-314.pyc
