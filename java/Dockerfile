@@ -6,15 +6,18 @@ COPY HelloWorld.java .
 
 RUN javac HelloWorld.java
 RUN native-image -o hello HelloWorld
+RUN strip hello
 
-# --- Stage 2: minimal distroless runtime ---
-FROM gcr.io/distroless/cc-debian12
+# --- Stage 2: scratch + only the 3 shared libraries the binary needs ---
+FROM scratch
 
+# The native-image binary (stripped)
 COPY --from=builder /app/hello /hello
 
-# cc-debian12 has glibc + libgcc + libstdc++, but is missing zlib.
-# Copy it from the builder to /lib/ (always in the default search path).
-COPY --from=builder /lib64/libz* /lib/
-COPY --from=builder /usr/lib64/libz* /lib/
+# libc + zlib (all we need for a simple CLI app)
+COPY --from=builder /lib/ld-linux-aarch64.so.1 /lib/
+COPY --from=builder /lib64/libc.so.6 /lib64/
+COPY --from=builder /lib64/libz.so.1.3.1.zlib-ng /lib64/libz.so.1.3.1.zlib-ng
+COPY --from=builder /lib64/libz.so.1 /lib64/libz.so.1
 
 ENTRYPOINT ["/hello"]
