@@ -15,7 +15,7 @@ extern "C" void _start() {
     register const char* x1 __asm__("x1") = msg;
     register long x2 __asm__("x2") = 14;
     register long x8 __asm__("x8") = 64;       // __NR_write
-    __asm__ volatile("svc #0" : "+r"(x0) : "r"(x1), "r"(x2), "r"(x8));
+    __asm__ volatile("svc #0" : "+r"(x0) : "r"(x1), "r"(x2), "r"(x8), "m"(msg));
 
     // exit(0)
     register long r0 __asm__("x0") = 0;
@@ -37,7 +37,7 @@ extern "C" void _start() {
         "mov $14, %%rdx\n"
         "syscall"
         :
-        : "r"(msg)
+        : "r"(msg), "m"(msg)
         : "rax", "rdi", "rsi", "rdx"
     );
 

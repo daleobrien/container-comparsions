@@ -166,8 +166,11 @@ def verify(label, runtime):
         image = f'hello-{label}-apple:latest'
         cmd = ['container', 'run', image]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    verified[label] = PASS if EXPECTED_OUTPUT in result.stdout else FAIL
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        verified[label] = PASS if EXPECTED_OUTPUT in result.stdout else FAIL
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        verified[label] = FAIL
 
 
 # ── Benchmark helpers ──────────────────────────────────────────────────────

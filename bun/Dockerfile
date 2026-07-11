@@ -7,5 +7,6 @@ COPY hello.js .
 RUN bun build --compile ./hello.js --outfile hello
 
 FROM alpine:3.20
+RUN apk add --no-cache libstdc++ libgcc
 COPY --from=builder /app/hello /hello
 ENTRYPOINT ["/hello"]
