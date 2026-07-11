@@ -12,4 +12,9 @@ FROM gcr.io/distroless/cc-debian12
 
 COPY --from=builder /app/hello /hello
 
+# cc-debian12 has glibc + libgcc + libstdc++, but is missing zlib.
+# Copy it from the builder to /lib/ (always in the default search path).
+COPY --from=builder /lib64/libz* /lib/
+COPY --from=builder /usr/lib64/libz* /lib/
+
 ENTRYPOINT ["/hello"]

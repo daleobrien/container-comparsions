@@ -21,6 +21,9 @@ RUN strip hello-sea
 # Alpine provides musl libc needed by the Node.js SEA binary
 FROM alpine:3.20
 
+# The node SEA binary links against libstdc++ and libgcc_s
+RUN apk add --no-cache libstdc++ libgcc
+
 COPY --from=builder /app/hello-sea /hello
 
 ENTRYPOINT ["/hello"]

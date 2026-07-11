@@ -7,7 +7,7 @@ WORKDIR /app
 COPY *.cs *.csproj .
 
 # Native AOT compilation produces a fully static binary on Alpine/musl
-RUN dotnet publish -c Release -p:PublishAot=true -p:StripSymbols=true -o out
+RUN dotnet publish -c Release -o out
 
 FROM scratch
 COPY --from=builder /app/out/hello /hello

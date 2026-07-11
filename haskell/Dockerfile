@@ -6,7 +6,7 @@ RUN apk add --no-cache ghc binutils gcc musl-dev
 WORKDIR /app
 COPY hello.hs .
 
-RUN ghc -O2 -o hello hello.hs
+RUN ghc -O2 -static -optl-static -optl-pthread -o hello hello.hs
 RUN strip hello
 
 # --- Stage 2: minimal execution image ---
