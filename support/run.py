@@ -21,6 +21,8 @@ SKIP_COLIMA = os.environ.get('SKIP_COLIMA', '') != ''
 
 IMAGES = ['bun', 'c', 'cpp', 'dotnet', 'go', 'haskell', 'java', 'node', 'php', 'python', 'ruby', 'rust', 'swift', 'zig']
 
+EXPECTED_OUTPUT = 'Hello, world!'
+
 # ── Active runtimes (order determines table column order) ─────────────────
 
 RUNTIMES = ['docker']
@@ -47,11 +49,16 @@ SHOW_CURSOR = '\033[?25h'
 # ── Table state ───────────────────────────────────────────────────────────
 
 PENDING = '\u2026'  # ellipsis for unfilled cells
+PASS = '\u2713'    # checkmark
+FAIL = '\u2717'    # cross
 
 data = {
     img: {rt: {'size': PENDING, 'avg': PENDING} for rt in RUNTIMES}
     for img in IMAGES
 }
+
+# Per-image verification status (tested once with the first runtime)
+verified = {img: PENDING for img in IMAGES}
 
 status = ''
 
@@ -79,7 +86,9 @@ def draw():
 
     # Data rows
     for img in IMAGES:
-        row = f'{img:<{COL_W["IMAGE"]}}'
+        v = verified.get(img, PENDING)
+        label = f'{v} {img}'
+        row = f'{label:<{COL_W["IMAGE"]}}'
         for rt in RUNTIMES:
             row += f' {data[img][rt]["size"]:>{COL_W["SIZE"]}}'
             row += f' {data[img][rt]["avg"]:>{COL_W["AVG"]}}'
@@ -143,6 +152,24 @@ def build(label, runtime):
         return f'{size:,}'
 
 
+# ── Verify helpers ──────────────────────────────────────────────────────────
+
+def verify(label, runtime):
+    """Run the container once and check it prints the expected output."""
+    rt_label = RUNTIME_HEADERS[runtime]
+    set_status(f'Testing {label} ({rt_label.lower()})...')
+
+    if runtime in ('docker', 'colima'):
+        image = f'hello-{label}'
+        cmd = _docker_cmd(runtime) + ['run', '--rm', image]
+    else:  # apple
+        image = f'hello-{label}-apple:latest'
+        cmd = ['container', 'run', image]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    verified[label] = PASS if EXPECTED_OUTPUT in result.stdout else FAIL
+
+
 # ── Benchmark helpers ──────────────────────────────────────────────────────
 
 def _run_once(label, runtime):
@@ -180,7 +207,12 @@ def main():
             for img in IMAGES:
                 data[img][rt]['size'] = build(img, rt)
 
-        # Phase 2: Benchmark
+        # Phase 2: Verify output
+        first_rt = RUNTIMES[0]
+        for img in IMAGES:
+            verify(img, first_rt)
+
+        # Phase 3: Benchmark
         for rt in RUNTIMES:
             for img in IMAGES:
                 benchmark(img, rt)
