@@ -1,0 +1,7 @@
+# Build artifacts (regenerated inside the container)
+bin/
+obj/
+out/
+
+# Dockerfile not needed in build context
+Dockerfile

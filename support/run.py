@@ -7,6 +7,7 @@ Each row is an image. Columns are SIZE and AVG for each active runtime
 builds and benchmarks complete. A status line shows the current operation.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -18,7 +19,7 @@ N_RUNS = int(os.environ.get('N_RUNS', '10'))
 SKIP_APPLE = os.environ.get('SKIP_APPLE', '') != ''
 SKIP_COLIMA = os.environ.get('SKIP_COLIMA', '') != ''
 
-IMAGES = ['rust', 'cpp', 'haskell', 'node', 'java', 'python']
+IMAGES = ['bun', 'c', 'cpp', 'dotnet', 'go', 'haskell', 'java', 'node', 'php', 'python', 'ruby', 'rust', 'swift', 'zig']
 
 # ── Active runtimes (order determines table column order) ─────────────────
 
@@ -54,7 +55,7 @@ data = {
 
 status = ''
 
-COL_W = {'IMAGE': 12, 'SIZE': 12, 'AVG': 14}
+COL_W = {'IMAGE': 12, 'SIZE': 14, 'AVG': 14}
 
 
 # ── Drawing ────────────────────────────────────────────────────────────────
@@ -121,27 +122,25 @@ def build(label, runtime):
             capture_output=True, check=True,
         )
         result = subprocess.run(
-            cmd + ['images', '--format', '{{.Size}}', image],
+            cmd + ['image', 'inspect', '--format', '{{.Size}}', image],
             capture_output=True, text=True, check=True,
         )
-        return result.stdout.strip()
+        return f'{int(result.stdout.strip()):,}'
 
     else:  # apple
         image = f'hello-{label}-apple'
         subprocess.run(
             ['container', 'build', '--arch', 'arm64', '--tag', image,
              '--file', f'{label}/Dockerfile', f'{label}/'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
+            capture_output=True, check=True,
         )
         result = subprocess.run(
-            ['container', 'image', 'list', '-v'],
+            ['container', 'image', 'inspect', f'{image}:latest'],
             capture_output=True, text=True, check=True,
         )
-        for line in result.stdout.strip().split('\n'):
-            parts = line.split()
-            if len(parts) >= 5 and parts[0] == image and parts[1] == 'latest':
-                return f'{parts[-4]} {parts[-3]}'
-        return '---'
+        info = json.loads(result.stdout)
+        size = info[0]["variants"][0]["size"]
+        return f'{size:,}'
 
 
 # ── Benchmark helpers ──────────────────────────────────────────────────────
@@ -188,7 +187,11 @@ def main():
 
         set_status('Done.')
     except subprocess.CalledProcessError as e:
-        err = e.stderr.decode() if e.stderr else str(e)
+        if e.stderr:
+            raw = e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr
+            err = raw if isinstance(raw, str) else str(raw)
+        else:
+            err = str(e)
         set_status(f'ERROR: {err[-200:]}')
         sys.exit(1)
     finally:
